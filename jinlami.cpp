@@ -1,0 +1,1522 @@
+#include<iostream>
+#include<cstdlib>
+#include<string.h>
+#include<time.h>
+using namespace std;
+const string strface[14]={"","A","2","3","4","5","6","7","8","9","10","J","Q","K"};
+struct card
+{
+	int suit;
+	int face;
+};
+void shuffle(card deck[],int n)
+{
+	srand((unsigned)time(NULL));
+	int i,j,cnt=0;
+    for(i=3;i<7;i++)
+	    for(j=1;j<14;j++)
+	        {
+	        	deck[cnt].suit=i;
+	        	deck[cnt].face=j;
+	        	cnt++;
+	        }
+	for(int i=1;i<52;i++) 
+	    swap(deck[i],deck[rand()%i]);  
+}
+void deal(card deck[],int n,card player1[],int m,card player2[],int p,card odeck[],int q)
+{
+	int i;
+	for(i=0;i<10;i++)
+	    player1[i]=deck[i];
+	for(i=10;i<20;i++)
+	    player2[i-10]=deck[i];
+	for(i=20;i<n;i++)
+	    odeck[i-20]=deck[i];
+}
+void showcard(card a)
+{
+	cout<<char(a.suit)<<strface[a.face];
+}
+void swap(card &a,card &b)
+{
+	card temp;
+	temp=b;
+	b=a;
+	a=temp;
+}
+void shift(card player[],int n,int m)
+{
+	int i;
+	for(i=m;i<n-1;i++)
+	    player[i]=player[i+1];
+}
+void showhand(card player[],int n,int b[],int m)
+{
+	int i,j=0;
+	for(i=0;i<m;i++)
+	    if(b[i]!=0)
+	    	{
+	    	    if(b[i]==2)
+	    	    	{
+						showcard(player[j]);
+						j++;
+					}
+	    	    else
+	    	    	cout<<" ";
+			}
+}
+void sortbysuit(card player[],int n,int b[],int m,int &deadwood)
+{
+	int i,j,cnt=1,next=0,nnext=0,max,dw=0;
+	card a[n],nextface,sameface;
+	for(i=0;i<m;i++)
+	    b[i]=0;
+	for(i=0;i<n-1;i++)
+	    for(j=0;j<n-1-i;j++)
+    	    {         
+	    	    if(player[j].face>player[j+1].face)
+	    	    	swap(player[j],player[j+1]);
+			}
+	for(i=0;i<n-2;i++)
+	    {
+	    	if(player[i].face!=0)
+			    {
+			        nextface=player[i];
+	    	        for(j=i+1;j<n;j++)
+	    	            if(nextface.suit==player[j].suit&&nextface.face==player[j].face-1)
+	    	                {
+	    	        	        cnt++;
+						        nextface=player[j];
+					        }
+					if(cnt>=3)
+	    	            {
+	    	    	        max=cnt;
+	    	    	        cnt=1;
+							nextface=player[i];
+					        a[next]=player[i];
+					        b[nnext]=2;
+					        nnext++;
+					        player[i].face=0;
+	    	    	        next++;
+					        for(j=i+1;j<n;j++)
+	    	    	            if(nextface.suit==player[j].suit&&nextface.face==player[j].face-1)
+	    	    	                {
+	    	    	        	        a[next]=player[j];
+	    	    	        	        b[nnext]=2;
+	    	    	        	        nnext++;
+	    	    	        	        cnt++;
+	    	    	        	        if(cnt==max&&next!=n-1)
+	    	    	        	            {
+	    	    	        	            	b[nnext]=1;
+	    	    	        	            	nnext++;
+	    	    	        	            }
+								        nextface=player[j];	    	    	        	
+								        player[j].face=0;
+	    	    	        	        next++;
+							        }
+				        }
+			        cnt=1;
+			    }
+		}
+	for(i=0;i<n-2;i++)
+	    {
+	    	if(player[i].face!=0)
+			    {
+			        cnt=1;
+			        sameface=player[i];
+			        for(j=i+1;j<n;j++)
+	    	            if(sameface.face==player[j].face)
+	    	                cnt++;
+	    	        if(cnt>=3)
+	    	            {
+				            for(j=i;j<i+cnt;j++)
+	    	                    {
+					                a[next]=player[j];
+					                b[nnext]=2;
+					                nnext++;
+					                if(j==i+cnt-1&&next!=n-1)
+					                    {
+					                    	b[nnext]=1;
+					                    	nnext++;
+										}
+					                player[j].face=0;
+	    	                        next++;
+	    	                    }
+	    	                i+=cnt-1;
+	    	            }
+	    	    }
+		}
+	for(i=0;i<n;i++)
+	    if(player[i].face!=0)
+	    	{
+	    	    a[next]=player[i];
+	    	    b[nnext]=2;
+	    	    nnext++;
+	    	    if(player[i].face<10)
+	    	        dw+=player[i].face;
+	    	    else
+	    	        dw+=10;
+	    	    next++;
+			}
+	deadwood=dw;
+	dw=0;
+	for(i=0;i<n;i++)
+	    player[i]=a[i];
+}
+void sortbyface(card player[],int n,int b[],int m,int &deadwood)
+{
+	int i,j,cnt=1,next=0,nnext=0,max,dw=0;
+	card a[n],nextface,sameface;
+	for(i=0;i<m;i++)
+	    b[i]=0;
+	for(i=0;i<n-1;i++)
+	    for(j=0;j<n-1-i;j++)
+    	    {         
+	    	    if(player[j].face>player[j+1].face)
+	    	    	swap(player[j],player[j+1]);
+			}
+	for(i=0;i<n-2;i++)
+	    {
+	    	if(player[i].face!=0)
+			    {
+			        cnt=1;
+			        sameface=player[i];
+			        for(j=i+1;j<n;j++)
+	    	            if(sameface.face==player[j].face)
+	    	                cnt++;
+					if(cnt==4)
+					    i+=3;
+					if(cnt==3)
+	    	            {
+				            for(j=i;j<i+cnt;j++)
+	    	                    {
+					                a[next]=player[j];
+					                b[nnext]=2;
+					                nnext++;
+					                if(j==i+cnt-1&&next!=n-1)
+					                    {
+					                    	b[nnext]=1;
+					                    	nnext++;
+										}
+					                player[j].face=0;
+	    	                        next++;
+	    	                    }
+	    	                i+=cnt-1;
+	    	            }
+	    	    }
+		}
+	for(i=0;i<n-2;i++)
+	    {
+	    	if(player[i].face!=0)
+			    {
+			        cnt=1;
+					nextface=player[i];
+	    	        for(j=i+1;j<n;j++)
+	    	            if(nextface.suit==player[j].suit&&nextface.face==player[j].face-1)
+	    	                {
+	    	        	        cnt++;
+						        nextface=player[j];
+					        }
+					if(cnt>=3)
+	    	            {
+	    	    	        max=cnt;
+	    	    	        cnt=1;
+							nextface=player[i];
+					        a[next]=player[i];
+					        b[nnext]=2;
+					        nnext++;
+					        player[i].face=0;
+	    	    	        next++;
+					        for(j=i+1;j<n;j++)
+	    	    	            if(nextface.suit==player[j].suit&&nextface.face==player[j].face-1)
+	    	    	                {
+	    	    	        	        a[next]=player[j];
+	    	    	        	        b[nnext]=2;
+	    	    	        	        nnext++;
+	    	    	        	        cnt++;
+	    	    	        	        if(cnt==max&&next!=n-1)
+	    	    	        	            {
+	    	    	        	            	b[nnext]=1;
+	    	    	        	            	nnext++;
+	    	    	        	            }
+								        nextface=player[j];	    	    	        	
+								        player[j].face=0;
+	    	    	        	        next++;
+							        }
+				        }
+			        cnt=1;
+			    }
+		}	
+	for(i=0;i<n-2;i++)
+	    {
+	    	if(player[i].face!=0)
+			    {
+			        cnt=1;
+			        sameface=player[i];
+			        for(j=i+1;j<n;j++)
+	    	            if(sameface.face==player[j].face)
+	    	                cnt++;
+	    	        if(cnt>=3)
+	    	            {
+				            for(j=i;j<i+cnt;j++)
+	    	                    {
+					                if(player[j].face==0)
+									    cnt++;
+									else	
+										{
+									        a[next]=player[j];
+					                        b[nnext]=2;
+					                        nnext++;
+					                        if(j==i+cnt-1&&next!=n-1)
+					                            {
+					                    	        b[nnext]=1;
+					                    	        nnext++;
+										        }
+					                        player[j].face=0;
+	    	                                next++;
+	    	                            }
+	    	                    }
+	    	                i+=cnt-1;
+	    	            }
+	    	    }
+		}		
+	for(i=0;i<n;i++)
+	    if(player[i].face!=0)
+	    	{
+	    	    a[next]=player[i];
+	    	    b[nnext]=2;
+	    	    nnext++;
+	    	    if(player[i].face<10)
+	    	        dw+=player[i].face;
+	    	    else
+	    	        dw+=10;
+	    	    next++;
+			}
+	deadwood=dw;
+	dw=0;
+	for(i=0;i<n;i++)
+	    player[i]=a[i];
+}
+void sort(card player[],int n,int b[],int m,int &deadwood)
+{
+	int i,dw1=0,dw2=0;
+	card test1[n],test2[n];
+	for(i=0;i<n;i++)
+	    {
+		    test1[i]=player[i];
+		    test2[i]=player[i];
+		}
+	sortbysuit(test1,n,b,m,deadwood);
+	dw1=deadwood;
+	sortbyface(test2,n,b,m,deadwood);
+	dw2=deadwood;
+	if(dw1<=dw2)
+	    sortbysuit(player,n,b,m,deadwood);
+	if(dw1>dw2)
+	    sortbyface(player,n,b,m,deadwood);
+}
+void layoffbysuit(card player[],int n,card aplayer[],int l,int b[],int m,int &deadwood)
+{
+	int i,j,cnt=1,next=0;
+	card a[20],nextface,sameface;
+	for(i=0;i<n-1;i++)
+	    for(j=0;j<n-1-i;j++)
+    	    {         
+	    	    if(player[j].face>player[j+1].face)
+	    	    	swap(player[j],player[j+1]);
+			}
+	for(i=0;i<n-2;i++)
+	    {
+	    	if(player[i].face!=0)
+			    {
+			        nextface=player[i];
+	    	        for(j=i+1;j<n;j++)
+	    	            if(nextface.suit==player[j].suit&&nextface.face==player[j].face-1)
+	    	                {
+	    	        	        cnt++;
+						        nextface=player[j];
+					        }
+					if(cnt>=3)
+	    	            {
+	    	    	        cnt=1;
+							nextface=player[i];
+					        a[next]=player[i];
+					        player[i].face=0;
+	    	    	        next++;
+					        for(j=i+1;j<n;j++)
+	    	    	            if(nextface.suit==player[j].suit&&nextface.face==player[j].face-1)
+	    	    	                {
+	    	    	        	        a[next]=player[j];
+	    	    	        	        cnt++;
+								        nextface=player[j];	    	    	        	
+								        player[j].face=0;
+	    	    	        	        next++;
+							        }
+				        }
+			        cnt=1;
+			    }
+		}
+	for(i=0;i<n-2;i++)
+	    {
+	    	if(player[i].face!=0)
+			    {
+			        cnt=1;
+			        sameface=player[i];
+			        for(j=i+1;j<n;j++)
+	    	            if(sameface.face==player[j].face)
+	    	                cnt++;
+	    	        if(cnt>=3)
+	    	            {
+				            for(j=i;j<i+cnt;j++)
+	    	                    {
+					                a[next]=player[j];
+					                player[j].face=0;
+	    	                        next++;
+	    	                    }
+	    	                i+=cnt-1;
+	    	            }
+	    	    }
+		}
+	for(i=0;i<l;i++)
+	    a[next+i]=aplayer[i];
+	sort(a,next+l,b,m,deadwood);
+}
+void layoffbyface(card player[],int n,card aplayer[],int l,int b[],int m,int &deadwood)
+{
+	int i,j,cnt=1,next=0;
+	card a[20],nextface,sameface;
+	for(i=0;i<n-1;i++)
+	    for(j=0;j<n-1-i;j++)
+    	    {         
+	    	    if(player[j].face>player[j+1].face)
+	    	    	swap(player[j],player[j+1]);
+			}
+	for(i=0;i<n-2;i++)
+	    {
+	    	if(player[i].face!=0)
+			    {
+			        cnt=1;
+			        sameface=player[i];
+			        for(j=i+1;j<n;j++)
+	    	            if(sameface.face==player[j].face)
+	    	                cnt++;
+					if(cnt==4)
+					    i+=3;
+					if(cnt==3)
+	    	            {
+				            for(j=i;j<i+cnt;j++)
+	    	                    {
+					                a[next]=player[j];
+					                player[j].face=0;
+	    	                        next++;
+	    	                    }
+	    	                i+=cnt-1;
+	    	            }
+	    	    }
+		}
+	for(i=0;i<n-2;i++)
+	    {
+	    	if(player[i].face!=0)
+			    {
+			        cnt=1;
+					nextface=player[i];
+	    	        for(j=i+1;j<n;j++)
+	    	            if(nextface.suit==player[j].suit&&nextface.face==player[j].face-1)
+	    	                {
+	    	        	        cnt++;
+						        nextface=player[j];
+					        }
+					if(cnt>=3)
+	    	            {
+	    	    	        cnt=1;
+							nextface=player[i];
+					        a[next]=player[i];
+					        player[i].face=0;
+	    	    	        next++;
+					        for(j=i+1;j<n;j++)
+	    	    	            if(nextface.suit==player[j].suit&&nextface.face==player[j].face-1)
+	    	    	                {
+	    	    	        	        a[next]=player[j];
+	    	    	        	        cnt++;
+								        nextface=player[j];	    	    	        	
+								        player[j].face=0;
+	    	    	        	        next++;
+							        }
+				        }
+			        cnt=1;
+			    }
+		}	
+	for(i=0;i<n-2;i++)
+	    {
+	    	if(player[i].face!=0)
+			    {
+			        cnt=1;
+			        sameface=player[i];
+			        for(j=i+1;j<n;j++)
+	    	            if(sameface.face==player[j].face)
+	    	                cnt++;
+	    	        if(cnt>=3)
+	    	            {
+				            for(j=i;j<i+cnt;j++)
+	    	                    {
+					                if(player[j].face==0)
+									    cnt++;
+									else	
+										{
+									        a[next]=player[j];
+					                        player[j].face=0;
+	    	                                next++;
+	    	                            }
+	    	                    }
+	    	                i+=cnt-1;
+	    	            }
+	    	    }
+		}
+	for(i=0;i<l;i++)
+	    a[next+i]=aplayer[i];
+	sort(a,next+l,b,m,deadwood);		
+}
+void layoff(card testa[],int n,card testb[],int l,card aplayer[],int o,card player[],int p,int b[],int m,int &deadwood)
+{
+	int i,dw1=0,dw2=0;
+	layoffbysuit(testa,n,aplayer,o,b,m,deadwood);
+	dw1=deadwood;
+	layoffbyface(testb,l,aplayer,o,b,m,deadwood);
+	dw2=deadwood;
+	if(dw1<=dw2)
+	    layoffbysuit(player,p,aplayer,o,b,m,deadwood);
+	if(dw1>dw2)
+	    layoffbyface(player,p,aplayer,o,b,m,deadwood);
+}
+void Take(card player[],int n,card odeck[],int m,int b[],int l,int &nextcard,int &cardremain,int &deadwood)
+{
+	player[10]=odeck[nextcard];
+	nextcard++;
+	cardremain--;
+	sort(player,11,b,l,deadwood);
+	showhand(player,11,b,l);
+	cout<<endl;	
+}
+void Discard(card player[],int n,int b[],int m,card &edeck,int who,int &deadwood)
+{
+	
+	bool ok=false;
+	int i,j=0,k=0;
+	char number[2];
+	sort(player,11,b,m,deadwood);
+	showhand(player,11,b,m);
+	cout<<endl;
+	for(i=0;i<m;i++)
+	    {
+	    	if(b[i]!=0)
+	    	    {
+	    	    	if(b[i]==2)
+	    	    	    {
+	    	    	    	if(player[k].face==10)
+	    	    	    	    {
+	    	    	    	    	if(j==10)
+	    	    	    	    	    cout<<"space";
+	    	    	    	    	else
+	    	    	    	    	    {
+	    	    	    	    	    	cout<<j<<"  ";
+	    	    	    	    	    	j++;
+										}
+								}
+							else
+							    {
+							    	if(j==10)
+							    	    cout<<"space";
+							    	else
+							    	    {
+							    	    	cout<<j<<" ";
+							    	    	j++;
+										}
+								}
+						}
+					else
+					    if(b[i+1]!=0&&b[i]==1)
+					        {
+					        	cout<<" ";
+					        	k--;
+							}
+				}
+			k++;
+		}
+	cout<<endl;
+	while(!ok)
+	{
+	    cout<<"Player"<<who<<"选择一张弃牌（0-9，空格）：";
+	    cin.getline(number,10,'\n');
+	    if(strlen(number)!=1)
+	        {
+	        	cout<<"输入错误,请重新输入!"<<endl;
+	        	ok=false;
+			}
+		else
+		    switch(number[0])
+	        {
+		        case '0':if(edeck.face==player[0].face&&edeck.suit==player[0].suit)
+		                    {
+		                	    cout<<"不能丢弃你这回合吃的牌,请重新选择！"<<endl;
+							    ok=false;
+							    break; 
+						    }
+					     else
+					        {
+			                    edeck=player[0];
+		                        shift(player,11,0);
+		                        ok=true;
+		                        break;
+		                    }
+		        case '1':if(edeck.face==player[1].face&&edeck.suit==player[1].suit)
+		                    {
+		                	    cout<<"不能丢弃你这回合吃的牌,请重新选择！"<<endl;
+							    ok=false;
+							    break; 
+						    }
+					     else
+					        {
+			                    edeck=player[1];
+		                        shift(player,11,1);
+		                        ok=true;
+		                        break;
+		                    }
+		        case '2':if(edeck.face==player[2].face&&edeck.suit==player[2].suit)
+		                    {
+		                	    cout<<"不能丢弃你这回合吃的牌,请重新选择！"<<endl;
+							    ok=false;
+							    break; 
+						    }
+					     else
+					        { 
+			                    edeck=player[2];
+		                        shift(player,11,2);
+		                        ok=true;
+		                        break;
+		                    }
+		        case '3':if(edeck.face==player[3].face&&edeck.suit==player[3].suit)
+		                    {
+		                	    cout<<"不能丢弃你这回合吃的牌,请重新选择！"<<endl;
+							    ok=false;
+							    break; 
+						    }
+					     else
+					        {
+			                    edeck=player[3];
+		                        shift(player,11,3);
+		                        ok=true;
+		                        break;
+		                    }
+		        case '4':if(edeck.face==player[4].face&&edeck.suit==player[4].suit)
+		                    {
+		                	    cout<<"不能丢弃你这回合吃的牌,请重新选择！"<<endl;
+							    ok=false;
+							    break; 
+						    }
+					     else
+					        {
+			                    edeck=player[4];
+		                        shift(player,11,4);
+		                        ok=true;
+		                        break;
+		                    }
+		        case '5':if(edeck.face==player[5].face&&edeck.suit==player[5].suit)
+		                    {
+		                	    cout<<"不能丢弃你这回合吃的牌,请重新选择！"<<endl;
+							    ok=false;
+							    break; 
+						    }
+					     else
+					        {
+			                    edeck=player[5];
+		                        shift(player,11,5);
+		                        ok=true;
+		                        break;
+		                    }
+		        case '6':if(edeck.face==player[6].face&&edeck.suit==player[6].suit)
+		                    {
+		                	    cout<<"不能丢弃你这回合吃的牌,请重新选择！"<<endl;
+							    ok=false;
+							    break; 
+						    }
+					     else
+					        {
+			                    edeck=player[6];
+		                        shift(player,11,6);
+		                        ok=true;
+		                        break;
+		                    }
+		        case '7':if(edeck.face==player[7].face&&edeck.suit==player[7].suit)
+		                    {
+		                	    cout<<"不能丢弃你这回合吃的牌,请重新选择！"<<endl;
+							    ok=false;
+							    break; 
+						    }
+					     else
+					        {
+			                    edeck=player[7];
+		                        shift(player,11,7);
+		                        ok=true;
+		                        break;
+		                    }
+		        case '8':if(edeck.face==player[8].face&&edeck.suit==player[8].suit)
+		                    {
+		                	    cout<<"不能丢弃你这回合吃的牌,请重新选择！"<<endl;
+							    ok=false;
+							    break; 
+						    }
+					     else
+					        {
+			                    edeck=player[8];
+		                        shift(player,11,8);
+		                        ok=true;
+		                        break;
+		                    }
+		        case '9':if(edeck.face==player[9].face&&edeck.suit==player[9].suit)
+		                    {
+		                	    cout<<"不能丢弃你这回合吃的牌,请重新选择！"<<endl;
+							    ok=false;
+							    break; 
+						    }
+					     else
+					        {
+			                    edeck=player[9];
+		                        shift(player,11,9);
+		                        ok=true;
+		                        break;
+		                    }
+		        case ' ':if(edeck.face==player[10].face&&edeck.suit==player[10].suit)
+		                    {
+		                	    cout<<"不能丢弃你这回合吃的牌,请重新选择！"<<endl;
+							    ok=false;
+							    break; 
+						    }
+					     else
+					        {
+			                    edeck=player[10];
+		                        ok=true;
+		                        break;
+		                    }
+			    default:cout<<"输入错误,请重新输入!"<<endl;
+			            ok=false;				 				 				 				 				 				 				 				 				 				 		     
+	        }
+    }
+	sort(player,10,b,m,deadwood);
+	cout<<"Player"<<who<<"弃牌";
+	showcard(edeck);
+}
+void Eat(card player[],int n,int b[],int m,card &edeck,int &deadwood)
+{
+	player[10]=edeck;
+	sort(player,11,b,m,deadwood);
+	showhand(player,11,b,m);
+	cout<<endl;	
+}
+void Gin(card player[],int n,card aplayer[],int l,int b[],int m,card &edeck,int who1,int who2,int &deadwood,int &deadwood2,bool &OK,int &score,bool &end)
+{
+	bool ok=false;
+	card test[n],t;
+	int i,j=0,k=0;
+	char number[2];
+	sort(player,11,b,m,deadwood);
+	showhand(player,11,b,m);
+	for(i=0;i<n;i++)
+	    test[i]=player[i];
+	cout<<endl;
+	for(i=0;i<m;i++)
+	    {
+	    	if(b[i]!=0)
+	    	    {
+	    	    	if(b[i]==2)
+	    	    	    {
+	    	    	    	if(player[k].face==10)
+	    	    	    	    {
+	    	    	    	    	if(j==10)
+	    	    	    	    	    cout<<"space";
+	    	    	    	    	else
+	    	    	    	    	    {
+	    	    	    	    	    	cout<<j<<"  ";
+	    	    	    	    	    	j++;
+										}
+								}
+							else
+							    {
+							    	if(j==10)
+							    	    cout<<"space";
+							    	else
+							    	    {
+							    	    	cout<<j<<" ";
+							    	    	j++;
+										}
+								}
+						}
+					else
+					    if(b[i+1]!=0&&b[i]==1)
+					        {
+					        	cout<<" ";
+					        	k--;
+							}
+				}
+			k++;
+		}
+	cout<<endl;
+	while(!ok)
+	{
+	    cout<<"Player"<<who1<<"选择一张弃牌（0-9，空格）：";
+	    cin.getline(number,10,'\n');
+	    if(strlen(number)!=1)
+	        {
+	        	cout<<"输入错误,请重新输入!"<<endl;
+	        	ok=false;
+			}
+		else
+	        switch(number[0])
+	        {
+		        case '0':if(edeck.face==test[0].face&&edeck.suit==test[0].suit)
+		                    {
+		                	    cout<<"不能丢弃你这回合吃的牌,请重新选择！"<<endl;
+		                	    ok=false;
+		                	    break;
+						    }
+					     else
+					        {
+			                    t=test[0];
+			                    shift(test,11,0);
+		                        ok=true;
+					            break;
+					        }
+		        case '1':if(edeck.face==test[1].face&&edeck.suit==test[1].suit)
+		                    {
+		                	    cout<<"不能丢弃你这回合吃的牌,请重新选择！"<<endl;
+		                	    ok=false;
+		                	    break;
+						    }
+					     else
+					        {
+			                    t=test[1];
+			                    shift(test,11,1);
+		                        ok=true;
+					            break;
+					        }
+		        case '2':if(edeck.face==test[2].face&&edeck.suit==test[2].suit)
+		                    {
+		                	    cout<<"不能丢弃你这回合吃的牌,请重新选择！"<<endl;
+		                	    ok=false;
+		                	    break;
+						    }
+					     else
+					        {
+			                    t=test[2];
+			                    shift(test,11,2);
+		                        ok=true;
+					            break;
+					        }
+		        case '3':if(edeck.face==test[3].face&&edeck.suit==test[3].suit)
+		                    {
+		                	    cout<<"不能丢弃你这回合吃的牌,请重新选择！"<<endl;
+		                	    ok=false;
+		                	    break;
+						    }
+					     else
+					        {
+			                    t=test[3];
+			                    shift(test,11,3);
+		                        ok=true;
+					            break;
+					        }
+		        case '4':if(edeck.face==test[4].face&&edeck.suit==test[4].suit)
+		                    {
+		                	    cout<<"不能丢弃你这回合吃的牌,请重新选择！"<<endl;
+		                	    ok=false;
+		                	    break;
+						    }
+					     else
+					        {
+			                    t=test[4];
+			                    shift(test,11,4);
+		                        ok=true;
+					            break;
+					        }
+		        case '5':if(edeck.face==test[5].face&&edeck.suit==test[5].suit)
+		                    {
+		                	    cout<<"不能丢弃你这回合吃的牌,请重新选择！"<<endl;
+		                	    ok=false;
+		                	    break;
+						    }
+					     else
+					        {
+			                    t=test[5];
+			                    shift(test,11,5);
+		                        ok=true;
+					            break;
+					        }
+		        case '6':if(edeck.face==test[6].face&&edeck.suit==test[6].suit)
+		                    { 
+		                	    cout<<"不能丢弃你这回合吃的牌,请重新选择！"<<endl;
+		                	    ok=false;
+		                	    break;
+						    }
+					     else
+					        {
+			                    t=test[6];
+			                    shift(test,11,6);
+		                        ok=true;
+					            break;
+					        }
+		        case '7':if(edeck.face==test[7].face&&edeck.suit==test[7].suit)
+		                    {
+		                	    cout<<"不能丢弃你这回合吃的牌,请重新选择！"<<endl;
+		                	    ok=false;
+		                	    break;
+						    }
+					     else
+					        {
+			                    t=test[7];
+			                    shift(test,11,7);
+		                        ok=true;
+					            break;
+					        }
+		        case '8':if(edeck.face==test[8].face&&edeck.suit==test[8].suit)
+		                    {
+		                	    cout<<"不能丢弃你这回合吃的牌,请重新选择！"<<endl;
+		                	    ok=false;
+		                	    break;
+						    }
+					     else
+					        {
+			                    t=test[8];
+			                    shift(test,11,8);
+		                        ok=true;
+					            break;
+					        }
+		        case '9':if(edeck.face==test[9].face&&edeck.suit==test[9].suit)
+		                    {
+		                	    cout<<"不能丢弃你这回合吃的牌,请重新选择！"<<endl;
+		                	    ok=false;
+		                	    break;
+						    }
+					     else
+					        {
+			                    t=test[9];
+			                    shift(test,11,9);
+		                        ok=true;
+					            break;
+					        }
+		        case ' ':if(edeck.face==test[10].face&&edeck.suit==test[10].suit)
+		                    {
+		                	    cout<<"不能丢弃你这回合吃的牌,请重新选择！"<<endl;
+		                	    ok=false;
+		                	    break;
+						    }
+					     else
+					        {
+			                    t=test[10];
+		                        ok=true;
+					            break;
+					        }
+			    default:cout<<"输入错误,请重新输入!"<<endl;
+			            ok=false;				 				 				 				 				 				 				 				 				 				 		     
+	        }
+    }
+	sort(test,10,b,m,deadwood);
+	if(deadwood!=0)
+	    {
+		    cout<<"手牌中还有死木,不能Gin,请重新选择!";
+		    cout<<endl;
+            OK=false;
+		}
+	else
+	    {
+	    	cout<<"Player"<<who1<<"Gin,弃牌";
+	    	showcard(t);
+	    	cout<<endl;
+			for(i=0;i<10;i++)
+	    	    player[i]=test[i];
+			cout<<"Player"<<who1;
+			showhand(player,10,b,m);
+	    	cout<<endl;
+	    	cout<<"Player"<<who2;
+	    	sort(aplayer,10,b,m,deadwood2);
+			showhand(aplayer,10,b,m);
+			cout<<endl;
+			score=25+deadwood2;
+			cout<<"Player"<<who1<<"胜利,得分25+"<<deadwood2<<"="<<score; 
+			OK=true;
+			end=true;
+		}
+}
+void Knock(card player[],int n,card aplayer[],int l,int b[],int m,card &edeck,int who1,int who2,int &deadwood,int &deadwood2,bool &OK,int &score,int &score2,bool &end)
+{
+	bool ok=false;
+	card test[n],testa[n],testb[n],t;
+	int i,j=0,k=0,dw=0;
+	char number[2];
+	sort(player,11,b,m,deadwood);
+	showhand(player,11,b,m);
+	for(i=0;i<n;i++)
+	    {
+	    	test[i]=player[i];
+	    	testa[i]=player[i];
+	    	testb[i]=player[i];
+	    }
+	cout<<endl;
+	for(i=0;i<m;i++)
+	    {
+	    	if(b[i]!=0)
+	    	    {
+	    	    	if(b[i]==2)
+	    	    	    {
+	    	    	    	if(player[k].face==10)
+	    	    	    	    {
+	    	    	    	    	if(j==10)
+	    	    	    	    	    cout<<"space";
+	    	    	    	    	else
+	    	    	    	    	    {
+	    	    	    	    	    	cout<<j<<"  ";
+	    	    	    	    	    	j++;
+										}
+								}
+							else
+							    {
+							    	if(j==10)
+							    	    cout<<"space";
+							    	else
+							    	    {
+							    	    	cout<<j<<" ";
+							    	    	j++;
+										}
+								}
+						}
+					else
+					    if(b[i+1]!=0&&b[i]==1)
+					        {
+					        	cout<<" ";
+					        	k--;
+							}
+				}
+			k++;
+		}
+	cout<<endl;
+	while(!ok)
+	{
+	    cout<<"Player"<<who1<<"选择一张弃牌（0-9，空格）：";
+	    cin.getline(number,10,'\n');
+	    if(strlen(number)!=1)
+	        {
+	        	cout<<"输入错误,请重新输入!"<<endl;
+	        	ok=false;
+			}
+		else
+	        switch(number[0])
+	        {
+		        case '0':if(edeck.face==test[0].face&&edeck.suit==test[0].suit)
+		                    {
+		                	    cout<<"不能丢弃你这回合吃的牌,请重新选择！"<<endl;
+		                	    ok=false;
+		                	    break;
+						    }
+					     else
+					        {
+			                    t=test[0];
+			                    shift(test,11,0);
+		                        ok=true;
+					            break;
+					        }
+		        case '1':if(edeck.face==test[1].face&&edeck.suit==test[1].suit)
+		                    {
+		                	    cout<<"不能丢弃你这回合吃的牌,请重新选择！"<<endl;
+		                	    ok=false;
+		                	    break;
+						    }
+					     else
+					        {
+			                    t=test[1];
+			                    shift(test,11,1);
+		                        ok=true;
+					            break;
+					        }
+		        case '2':if(edeck.face==test[2].face&&edeck.suit==test[2].suit)
+		                    {
+		                	    cout<<"不能丢弃你这回合吃的牌,请重新选择！"<<endl;
+		                	    ok=false;
+		                	    break;
+						    }
+					     else
+					        { 
+			                    t=test[2];
+			                    shift(test,11,2);
+		                        ok=true;
+					            break;
+					        }
+		        case '3':if(edeck.face==test[3].face&&edeck.suit==test[3].suit)
+		                    {
+		                	    cout<<"不能丢弃你这回合吃的牌,请重新选择！"<<endl;
+		                	    ok=false;
+		                	    break;
+						    }
+					     else
+					        {
+			                    t=test[3];
+			                    shift(test,11,3);
+		                        ok=true;
+					            break;
+					        }
+		        case '4':if(edeck.face==test[4].face&&edeck.suit==test[4].suit)
+		                    {
+		                	    cout<<"不能丢弃你这回合吃的牌,请重新选择！"<<endl;
+		                	    ok=false;
+		                	    break;
+						    }
+					     else
+					        {
+			                    t=test[4];
+			                    shift(test,11,4);
+		                        ok=true;
+					            break;
+					        }
+		        case '5':if(edeck.face==test[5].face&&edeck.suit==test[5].suit)
+		                    {
+		                	    cout<<"不能丢弃你这回合吃的牌,请重新选择！"<<endl;
+		                	    ok=false;
+		                	    break;
+						    }
+					     else
+					        {
+			                    t=test[5];
+			                    shift(test,11,5);
+		                        ok=true;
+					            break;
+					        }
+		        case '6':if(edeck.face==test[6].face&&edeck.suit==test[6].suit)
+		                    {
+		                	    cout<<"不能丢弃你这回合吃的牌,请重新选择！"<<endl;
+		                	    ok=false;
+		                	    break;
+						    }
+					     else
+					        {
+			                    t=test[6];
+			                    shift(test,11,6);
+		                        ok=true;
+					            break;
+					        }
+		        case '7':if(edeck.face==test[7].face&&edeck.suit==test[7].suit)
+		                    {
+		                	    cout<<"不能丢弃你这回合吃的牌,请重新选择！"<<endl;
+		                	    ok=false;
+		                	    break;
+						    }
+					     else
+					        {
+			                    t=test[7];
+			                    shift(test,11,7);
+		                        ok=true;
+					            break;
+					        }
+		        case '8':if(edeck.face==test[8].face&&edeck.suit==test[8].suit)
+		                    {
+		                	    cout<<"不能丢弃你这回合吃的牌,请重新选择！"<<endl;
+		                	    ok=false;
+		                	    break;
+						    }
+					     else
+					        {
+			                    t=test[8];
+			                    shift(test,11,8);
+		                        ok=true;
+					            break;
+					        }
+		        case '9':if(edeck.face==test[9].face&&edeck.suit==test[9].suit)
+		                    {
+		                	    cout<<"不能丢弃你这回合吃的牌,请重新选择！"<<endl;
+		                	    ok=false;
+		                	    break;
+						    }
+					     else
+					        {
+			                    t=test[9];
+			                    shift(test,11,9);
+		                        ok=true;
+					            break;
+					        }
+		        case ' ':if(edeck.face==test[10].face&&edeck.suit==test[10].suit)
+		                    {
+		                	    cout<<"不能丢弃你这回合吃的牌,请重新选择！"<<endl;
+		                	    ok=false;
+		                	    break;
+						    }
+					     else
+					        {
+			                    t=test[10];
+		                        ok=true;
+					            break;
+					        }
+			    default:cout<<"输入错误,请重新输入!"<<endl;
+			            ok=false;				 				 				 				 				 				 				 				 				 				 		     
+	        }
+    }
+	sort(test,10,b,m,deadwood);
+	if(deadwood>=10)
+	    {
+		    cout<<"死木点大于等于10,不能Konck,请重新选择!";
+		    cout<<endl;
+            OK=false;
+		}
+	else
+	    {
+	    	cout<<"Player"<<who1<<"Knock,弃牌";
+	    	showcard(t);
+	    	cout<<endl;
+			for(i=0;i<10;i++)
+	    	    player[i]=test[i];
+			cout<<"Player"<<who1;
+			showhand(player,10,b,m);
+	    	cout<<endl;
+	    	cout<<"Player"<<who2;
+	    	sort(aplayer,10,b,m,deadwood2);
+	    	dw=deadwood2;
+			showhand(aplayer,10,b,m);
+			cout<<endl;
+			layoff(testa,10,testb,10,aplayer,10,player,10,b,m,deadwood2);
+			cout<<"Player"<<who2<<"销牌:"<<dw-deadwood2<<endl;
+			if(deadwood<deadwood2)
+			    {
+			    	score=deadwood2-deadwood;
+			        cout<<"Player"<<who1<<"胜利,得分"<<"("<<dw<<"-"<<dw-deadwood2<<")"<<"-"<<deadwood<<"="<<score; 
+			        OK=true;
+		 	        end=true;	 			    	
+				}
+			else
+			    {
+			        score2=10+deadwood-deadwood2;
+					cout<<"Player"<<who2<<"胜利,得分10+"<<deadwood<<"-"<<"("<<dw<<"-"<<dw-deadwood2<<")"<<"="<<score2; 
+			        OK=true;
+			        end=true;
+				}
+		}
+}
+void player1turn(card player[],int n,card aplayer[],int o,card odeck[],int m,int b[],int l,card &edeck,int &nextcard,int &cardremain,int &deadwood,int &deadwood2,int &score,int &score2,bool &end)
+{
+	bool OK=false;
+	char choose1[2],choose2[2];
+	cout<<"换牌柱";
+	showcard(edeck);
+	cout<<"剩余"<<cardremain<<"张"<<endl;
+	sort(player,10,b,l,deadwood);
+	showhand(player,10,b,l);
+	cout<<endl;
+	while(!OK)
+	{
+	    cout<<"Player1(Eat/Take):";
+	    cin.getline(choose1,10,'\n');
+	    if(strlen(choose1)!=1)
+	        {
+	        	cout<<"输入错误,请重新输入!"<<endl;
+	        	OK=false;
+			}
+		else
+	        switch(choose1[0])
+	        {
+		        case 'E':Eat(player,11,b,l,edeck,deadwood);
+		                 OK=true;
+		                 break;
+		        case 'T':Take(player,11,odeck,32,b,l,nextcard,cardremain,deadwood);
+		                 OK=true;
+					     break;
+		        default:cout<<"输入错误,请重新输入!"<<endl; 
+			            OK=false;
+            }
+    }
+    OK=false;
+	while(!OK)
+	{
+	    cout<<"Player1(Discard/Gin/Knock):";
+        cin.getline(choose2,10,'\n');
+        if(strlen(choose2)!=1)
+            {
+            	cout<<"输入错误,请重新输入!"<<endl;
+            	OK=false;
+			}
+		else
+            switch(choose2[0])
+            {
+    	        case 'D':Discard(player,11,b,l,edeck,1,deadwood);
+    	                 OK=true;
+    	                 break;
+    	        case 'G':Gin(player,11,aplayer,10,b,l,edeck,1,2,deadwood,deadwood2,OK,score,end);
+    	                 break;
+    	        case 'K':Knock(player,11,aplayer,10,b,l,edeck,1,2,deadwood,deadwood2,OK,score,score2,end);
+    	                 break;
+    	        default:cout<<"输入错误,请重新输入!"<<endl;
+    	                OK=false;
+	        }
+    }
+	if(cardremain==0)
+	    end=true;
+	getchar();
+}
+void player2turn(card player[],int n,card aplayer[],int o,card odeck[],int m,int b[],int l,card &edeck,int &nextcard,int &cardremain,int &deadwood,int &deadwood2,int &score,int &score2,bool &end)
+{
+	bool OK=false;
+	char choose1[2],choose2[2];
+	cout<<"换牌柱";
+	showcard(edeck);
+	cout<<"剩余"<<cardremain<<"张"<<endl;
+	sort(player,10,b,l,deadwood);
+	showhand(player,10,b,l);
+	cout<<endl;
+	while(!OK)
+	{
+	    cout<<"Player2(Eat/Take):";
+	    cin.getline(choose1,10,'\n');
+	    if(strlen(choose1)!=1)
+	        {
+	        	cout<<"输入错误,请重新输入!"<<endl;
+	        	OK=false;
+			}
+		else
+	        switch(choose1[0])
+	        {
+		        case 'E':Eat(player,11,b,l,edeck,deadwood);
+		                 OK=true;
+		                 break;
+		        case 'T':Take(player,11,odeck,32,b,l,nextcard,cardremain,deadwood);
+		                 OK=true;
+					     break;
+		        default:cout<<"输入错误,请重新输入!"<<endl; 
+			            OK=false;
+            }
+    }
+    OK=false;
+    while(!OK)
+	{
+	    cout<<"Player2(Discard/Gin/Knock):";
+        cin.getline(choose2,10,'\n');
+        if(strlen(choose2)!=1)
+            {
+            	cout<<"输入错误,请重新输入!"<<endl;
+            	OK=false;
+			}
+		else
+            switch(choose2[0])
+            {
+    	        case 'D':Discard(player,11,b,l,edeck,2,deadwood);
+    	                 OK=true;
+					     break;
+	            case 'G':Gin(player,11,aplayer,10,b,l,edeck,2,1,deadwood,deadwood2,OK,score,end);
+	                     break;
+	            case 'K':Knock(player,11,aplayer,10,b,l,edeck,2,1,deadwood,deadwood2,OK,score,score2,end);
+	                     break;
+	            default:cout<<"输入错误,请重新输入!"<<endl;
+			            OK=false; 
+		    }  
+    }
+	if(cardremain==0)
+	    end=true;	
+	getchar();
+}
+int main(void)
+{	
+	cout<<"本程序中手牌已自动按死木点最小的方式组合，无需再用玩家选择！";
+	getchar();
+	system("cls"); 
+	bool ctn=true;
+	int finalscore1=0,finalscore2=0;
+	card deck[52],odeck[32],edeck,player1[11],player2[11]; 
+	while(ctn)
+	    {
+	        bool end=false,ok=false,ok2=false,ok3=false;
+	        char choose[2],choose2[2],choose3[2],choose4[2];
+			int nextcard=1,cardremain=31,deadwood1=0,deadwood2=0,b[30]={0},score1=0,score2=0;
+			shuffle(deck,52);
+	        deal(deck,52,player1,11,player2,11,odeck,32);
+			edeck=odeck[0];
+	        cout<<"换牌柱";
+	        showcard(edeck);
+	        cout<<"剩余"<<cardremain<<"张"<<endl;
+	        sort(player1,10,b,30,deadwood1);
+	        showhand(player1,10,b,30);
+	        cout<<endl;
+	        while(!ok)
+	        {
+			    cout<<"Player1是否获得这张牌?(Yes/No):";
+	            cin.getline(choose2,10,'\n');
+	            if(strlen(choose2)!=1)
+	                {
+	                	cout<<"输入错误,请重新输入!"<<endl;
+	                	ok=false;
+					}
+				else
+	                switch(choose2[0])
+	                {
+		                case 'Y':Eat(player1,11,b,30,edeck,deadwood1);
+		                         while(!ok2)
+	                             {
+	                                cout<<"Player1(Discard/Gin/Knock):";
+                                    cin.getline(choose3,10,'\n');
+                                    if(strlen(choose3)!=1)
+                                        {
+                                        	cout<<"输入错误,请重新输入!"<<endl;
+                                        	ok2=false;
+										}
+									else
+                                        switch(choose3[0])
+                                        {
+    	                                    case 'D':Discard(player1,11,b,30,edeck,1,deadwood1);
+    	                                             ok2=true;
+    	                                             break;
+    	                                    case 'G':Gin(player1,11,player2,10,b,30,edeck,1,2,deadwood1,deadwood2,ok2,score1,end);
+    	                                             break;
+    	                                    case 'K':Knock(player1,11,player2,10,b,30,edeck,1,2,deadwood1,deadwood2,ok2,score1,score2,end);
+    	                                             break;
+    	                                    default:cout<<"输入错误,请重新输入!"<<endl;
+    	                                             ok2=false;
+	                                    }
+                                 }
+                                 getchar();
+                                 system("cls");
+                                 if(end==false)
+                                    {
+							            cout<<"游戏开始"<<endl;
+							            player2turn(player2,11,player1,11,odeck,32,b,30,edeck,nextcard,cardremain,deadwood2,deadwood1,score2,score1,end);
+							            system("cls");
+							        }
+							     ok=true;
+		                         break;
+		                case 'N':system("cls");
+		                         cout<<"换牌柱";
+	                             showcard(edeck);
+	                             cout<<"剩余"<<cardremain<<"张"<<endl;
+							     sort(player2,10,b,30,deadwood2);
+	                             showhand(player2,10,b,30);
+	                             cout<<endl;
+		                         while(!ok2)
+	                             {
+	                                cout<<"Player2是否获得这张牌?(Yes/No):";
+	                                cin.getline(choose3,10,'\n');
+	                                if(strlen(choose3)!=1)
+	                                    {
+	                                    	cout<<"输入错误,请重新输入!"<<endl;
+	                                    	ok2=false;
+										}
+									else
+	                                    switch(choose3[0])
+	                                    {
+		                                    case 'Y':Eat(player2,11,b,30,edeck,deadwood2);
+		                                             while(!ok3)
+	                                                 {
+	                                                    cout<<"Player2(Discard/Gin/Knock):";
+                                                        cin.getline(choose4,10,'\n');
+                                                        if(strlen(choose4)!=1)
+                                                            {
+                                                            	cout<<"输入错误,请重新输入!"<<endl;
+                                                            	ok3=false;
+															}
+														else
+                                                            switch(choose4[0])
+                                                            {
+    	                                                        case 'D':Discard(player2,11,b,30,edeck,2,deadwood2);
+    	                                                                 ok3=true;
+					                                                     break;
+	                                                            case 'G':Gin(player2,11,player1,10,b,30,edeck,2,1,deadwood2,deadwood1,ok3,score2,end);
+	                                                                     break;
+	                                                            case 'K':Knock(player2,11,player1,10,b,30,edeck,2,1,deadwood2,deadwood1,ok3,score2,score1,end);
+	                                                                     break;
+	                                                            default:cout<<"输入错误,请重新输入!"<<endl;
+			                                                            ok3=false; 
+		                                                    } 
+                                                     }
+                                                     getchar();
+                                                     system("cls");
+                                                     if(end==false)
+                                                        cout<<"游戏开始"<<endl;
+		                                             ok2=true;
+		                                             break;
+		                                    case 'N':system("cls");
+		                                             cout<<"游戏开始"<<endl;
+		                                             cout<<"Player2拿牌"<<endl; 
+									                 Take(player2,11,odeck,32,b,30,nextcard,cardremain,deadwood2);
+		                                             while(!ok3)
+	                                                 {
+	                                                    cout<<"Player2(Discard/Gin/Knock):";
+                                                        cin.getline(choose4,10,'\n');
+                                                        if(strlen(choose4)!=1)
+                                                            {
+                                                            	cout<<"输入错误,请重新输入!"<<endl;
+                                                            	ok3=false;
+															}
+														else
+                                                            switch(choose4[0])
+                                                            {
+    	                                                        case 'D':Discard(player2,11,b,30,edeck,2,deadwood2);
+    	                                                                 ok3=true;
+					                                                     break;
+	                                                            case 'G':Gin(player2,11,player1,10,b,30,edeck,2,1,deadwood2,deadwood1,ok3,score2,end);
+	                                                                     break;
+	                                                            case 'K':Knock(player2,11,player1,10,b,30,edeck,2,1,deadwood2,deadwood1,ok3,score2,score1,end);
+	                                                                     break;
+	                                                            default:cout<<"输入错误,请重新输入!"<<endl;
+			                                                             ok3=false; 
+		                                                    }  
+                                                     }
+                                                     getchar();
+                                                     system("cls");		                            
+		                                             ok2=true;
+					                                 break;
+		                                    default:cout<<"输入错误,请重新输入!"<<endl; 
+			                                        ok2=false;
+                                        }
+                                 }	
+					             ok=true;
+				                 break;
+		                default:cout<<"输入错误,请重新输入!"<<endl; 
+			                    ok=false;
+                    }
+			}
+			ok=false;
+			while(!end)
+	            {
+					player1turn(player1,11,player2,11,odeck,32,b,30,edeck,nextcard,cardremain,deadwood1,deadwood2,score1,score2,end);
+					system("cls");
+	            	if(end==false)
+					    {
+					        player2turn(player2,11,player1,11,odeck,32,b,30,edeck,nextcard,cardremain,deadwood2,deadwood1,score2,score1,end);
+	            	        system("cls");
+	            	    }
+				}
+			cout<<"Player1本局得分:"<<score1<<endl;
+			cout<<"Player2本局得分:"<<score2;
+			getchar();
+			system("cls");
+			finalscore1+=score1;
+			finalscore2+=score2;
+			cout<<"Player1最终得分:"<<finalscore1<<endl;
+			cout<<"Player2最终得分:"<<finalscore2;
+			getchar();
+			system("cls"); 
+ 	        while(!ok)
+	        {
+	            cout<<"是否再玩一局?(Yes/No):";
+	            cin.getline(choose,10,'\n');
+	            if(strlen(choose)!=1)
+	                {
+	                	cout<<"输入错误,请重新输入!"<<endl;
+	                	ok=false;
+					}
+				else
+	                switch(choose[0])
+	                {
+		                case 'Y':ctn=true;
+		                         system("cls");
+		                         ok=true;
+		                         break;
+		                case 'N':ctn=false;
+		                         ok=true;
+					             break;
+		                default:cout<<"输入错误,请重新输入!"<<endl; 
+			                    ok=false;
+                    }
+            }	        
+	    }
+	return 0;
+}
